@@ -2,65 +2,63 @@ import React from 'react';
 import { mount } from 'enzyme';
 
 import api from '../../utils/api';
+import { DetailContext } from '../../pages/Version';
 
 import { ActionBar } from './ActionBar';
 
-const mockPackageMeta: jest.Mock = jest.fn(() => ({
+const mockPackageMeta = {
+  _uplinks: {},
   latest: {
-    homepage: 'https://verdaccio.tld',
-    bugs: {
-      url: 'https://verdaccio.tld/bugs',
-    },
+    name: 'verdaccio',
+    version: '0.0.0',
     dist: {
-      tarball: 'https://verdaccio.tld/download',
+      fileCount: 1,
+      unpackedSize: 1,
     },
   },
-}));
+};
 
-jest.mock('../../pages/Version', () => ({
-  DetailContextConsumer: component => {
-    return component.children({ packageMeta: mockPackageMeta() });
-  },
-}));
+const withActionBarComponent = (packageMeta: React.ContextType<typeof DetailContext>['packageMeta']): JSX.Element => (
+  <DetailContext.Provider value={{ packageMeta }}>
+    <ActionBar />
+  </DetailContext.Provider>
+);
 
 describe('<ActionBar /> component', () => {
-  beforeEach(() => {
-    jest.resetModules();
-    jest.resetAllMocks();
-  });
-
   test('should render the component in default state', () => {
-    const wrapper = mount(<ActionBar />);
-    expect(wrapper.html()).toMatchSnapshot();
+    const wrapper = mount(withActionBarComponent(mockPackageMeta));
+
+    expect(wrapper.html()).toBeNull();
   });
 
   test('when there is no action bar data', () => {
-    mockPackageMeta.mockImplementation(() => ({
-      latest: {},
-    }));
+    const wrapper = mount(withActionBarComponent({ latest: {} } as any));
 
-    const wrapper = mount(<ActionBar />);
-    // FIXME: this only renders the DetailContextConsumer, thus
-    // the wrapper will be always empty
-    expect(wrapper.html()).toEqual('');
+    expect(wrapper.html()).toBeNull();
   });
 
   test('when there is no latest property in package meta', () => {
-    mockPackageMeta.mockImplementation(() => ({}));
-    const wrapper = mount(<ActionBar />);
-    expect(wrapper.html()).toEqual('');
+    const wrapper = mount(withActionBarComponent({} as any));
+
+    expect(wrapper.html()).toBeNull();
   });
 
   test('when there is a button to download a tarball', () => {
-    mockPackageMeta.mockImplementation(() => ({
-      latest: {
-        dist: {
-          tarball: 'http://localhost:8080/bootstrap/-/bootstrap-4.3.1.tgz',
+    const wrapper = mount(
+      withActionBarComponent({
+        ...mockPackageMeta,
+        latest: {
+          ...mockPackageMeta.latest,
+          ...{
+            dist: {
+              fileCount: 1,
+              unpackedSize: 1,
+              tarball: 'http://localhost:8080/bootstrap/-/bootstrap-4.3.1.tgz',
+            },
+          },
         },
-      },
-    }));
-
-    const wrapper = mount(<ActionBar />);
+      })
+    );
     expect(wrapper.html()).toMatchSnapshot();
 
     const button = wrapper.find('button');
@@ -72,15 +70,19 @@ describe('<ActionBar /> component', () => {
   });
 
   test('when there is a button to open an issue', () => {
-    mockPackageMeta.mockImplementation(() => ({
-      latest: {
-        bugs: {
-          url: 'https://verdaccio.tld/bugs',
+    const wrapper = mount(
+      withActionBarComponent({
+        ...mockPackageMeta,
+        latest: {
+          ...mockPackageMeta.latest,
+          ...{
+            bugs: {
+              url: 'https://verdaccio.tld/bugs',
+            },
+          },
         },
-      },
-    }));
-
-    const wrapper = mount(<ActionBar />);
+      })
+    );
     expect(wrapper.html()).toMatchSnapshot();
 
     const button = wrapper.find('button');

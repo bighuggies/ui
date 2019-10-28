@@ -5,10 +5,15 @@ export interface PackageMetaInterface {
   latest: {
     author?: Author;
     name: string;
+    bugs?: {
+      url: string;
+    };
     dist: {
       fileCount: number;
+      tarball?: string;
       unpackedSize: number;
     };
+    homepage?: string;
     license?: Partial<LicenseInterface> | string;
     version: string;
   };
